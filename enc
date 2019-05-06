@@ -35,4 +35,21 @@ lookup_values.each do |value|
   end
 end
 
+# Support role "base" configuration, shared by similarly named roles.
+# This is meant for use in tandem with a hiera level configured as
+#
+#   mapped_paths: [role_parts, role_part, "role/%{role_part}.yaml"]
+#
+# For example, roles ceph__mon and ceph__osd would then share configuration
+# defined in ceph.yaml.
+if result.key?('parameters') and result['parameters']['primary_role']
+  role_components = result['parameters']['primary_role'].split('__')
+  parent_roles = []
+  for role_component in role_components do
+    parent_roles.unshift(role_components.slice(0, parent_roles.length + 1).join('__'))
+  end
+
+  result['parameters']['role_parts'] = parent_roles
+end
+
 puts result.to_yaml
